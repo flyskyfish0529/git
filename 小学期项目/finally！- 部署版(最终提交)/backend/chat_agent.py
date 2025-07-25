@@ -61,8 +61,8 @@ def group_by_school_min_score_sum_enroll(results):
 
     for row in results:
         school = row[0]
-        enroll = int(row[2])
-        avg_score = float(row[3])
+        enroll = int(row[3])
+        avg_score = float(row[4])
         school_data[school]['招生人数'] += enroll
         if school_data[school]['平均分'] is None or avg_score >= school_data[school]['平均分']:
             school_data[school]['平均分'] = avg_score
@@ -135,7 +135,7 @@ def fix_sql_parentheses(sql: str) -> str:
     自动修正SQL语句中加权得分表达式括号不匹配的问题
     """
     # 匹配加权得分表达式（WHERE和SELECT里的）
-    pattern = re.compile(r'(\(?0\.3\s.*?)(?=AS|>=)', re.DOTALL)
+    pattern = re.compile(r'(\(?0\.2\s.*?)(?=AS\s|>)', re.DOTALL)
 
     def fix_expr(m):
         # 统计左右括号数量
@@ -145,6 +145,8 @@ def fix_sql_parentheses(sql: str) -> str:
         # 如果左括号多，补齐右括号
         if left > right:
             expr += ')' * (left - right)
+        elif left <right:
+            expr = '(' * (left - right)+expr
         return expr
 
     # 替换所有加权得分表达式

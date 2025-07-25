@@ -5,7 +5,6 @@ import streamlit as st
 import requests
 import json
 import time
-import random
 from typing import Generator
 import logging
 from dotenv import load_dotenv
@@ -173,6 +172,8 @@ class StreamlitChatInterface:
 
 def main():
     """主函数"""
+    if 'last_update_time' not in st.session_state:
+        st.session_state.last_update_time = "暂无数据"
     # 尝试获取推荐结果
     try:
         response = httpx.get(
@@ -183,9 +184,10 @@ def main():
         response.raise_for_status()  # 检查HTTP状态码
         response_data = response.json()
 
-        if not response_data:  # 检查数据是否为空
-            st.info("正在生成您的志愿推荐，请稍候...")
-            return
+        # 当数据发生变化时更新显示时间
+        if response_data != st.session_state.get('last_data'):
+            st.session_state.last_data = response_data
+            st.session_state.last_update_time = time.strftime("%Y-%m-%d %H:%M:%S")
 
         # 解析数据并显示
         data_dict = ast.literal_eval(response_data)
@@ -199,6 +201,7 @@ def main():
         df = df[["志愿类型", "院校名称", "总招生人数", "平均分", "录取概率"]]
 
         with st.expander("点击获取您的志愿表"):
+            st.write(f"表格更新时间：{st.session_state.last_update_time}")
             st.dataframe(
                 df,
                 column_config={
@@ -231,6 +234,3 @@ st.markdown(
     unsafe_allow_html=True
 )
 main()
-
-
-

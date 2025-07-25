@@ -10,7 +10,7 @@ import requests
 from streamlit_lottie import st_lottie
 import re
 
-# 初始化st.session_statef
+# 初始化st.session_state
 if 'users' not in st.session_state:
     st.session_state.users = {}
 if 'verification_codes' not in st.session_state:
@@ -131,7 +131,9 @@ def global_css():
 def login_page():
 
     global_css()
-    st.markdown("<h1 style='text-align:center; color:#4f8df7;'>小橘助手--专业的大学志愿填报助手 - 登录</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align:center; color:#4f8df7;'>小橘助手--专业的大学志愿填报助手</h1>", unsafe_allow_html=True)
+    st.markdown("<h2 style='text-align:center; color:#4f8df7;'>登录</h2>",
+                unsafe_allow_html=True)
     st.markdown('<div class="glass-card">', unsafe_allow_html=True)
 
 

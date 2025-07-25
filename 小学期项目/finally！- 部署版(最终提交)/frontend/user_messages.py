@@ -125,7 +125,7 @@ def page_1():
     # 更新DataFrame数据
     student_info.at[0, "信息内容"] = province
     student_info.at[1, "信息内容"] = str(score)
-    student_info.at[2, "信息内容"] = ", ".join(selected_subjects)
+    student_info.at[2, "信息内容"] = ",".join(selected_subjects)
     student_info.at[3, "信息内容"] = str(rank)
     student_info.at[4, "信息内容"] = want_major if want_major else "无"
     student_info.at[5, "信息内容"] = unwant_major if unwant_major else "无"
@@ -146,7 +146,6 @@ def page_1():
     with cols[0]:
 
         placeholder = st.empty()
-        #st.image("src/home.png",width=1000)
         # 加载图片
         image1 = Image.open("src/home0.png").convert("RGBA")
         image2 = Image.open("src/home1.png").convert("RGBA")
@@ -201,12 +200,19 @@ def page_1():
             # 循环完成后重新运行脚本
             st.rerun()
         else:
-            placeholder.image(image1, use_container_width=True)  # 修改这里
+            placeholder.image(image1, use_container_width=True)
 
 
 
 # 页面2：显示考生信息并提交
 def page_2():
+
+    # 初始化按钮状态 - 只在第一次运行时初始化
+
+    if 'confirmed' not in st.session_state:
+        st.session_state.confirmed = False
+    if 'back' not in st.session_state:
+        st.session_state.back = True
     # 显示考生信息表格
     st.dataframe(
         st.session_state.student_info,
@@ -218,91 +224,97 @@ def page_2():
         }
     )
 
-    # 初始化按钮状态
-    if 'confirmed' not in st.session_state:
+    # 创建按钮容器
+    col1, col2 = st.columns(2)
+    with col1:
+        confirm_button = st.button(
+            "确认信息无误，提交",
+            disabled=st.session_state.confirmed,
+            key="unique_confirm_button"
+        )
+    with col2:
+        back_button = st.button(
+            "返回上一页",
+            disabled=not st.session_state.back,
+            key="unique_back_button"
+        )
+
+    # 处理返回按钮
+    if back_button:
+        st.session_state.Current_page = 'page1'
+        st.rerun()
+
+    # 处理确认按钮
+    if confirm_button and not st.session_state.confirmed:
+        st.session_state.confirmed = True
+        st.session_state.back = False
+        st.rerun()
+    # 执行提交逻辑
+    if st.session_state.confirmed:
         st.session_state.confirmed = False
-
-    # 使用固定的唯一 key 创建按钮
-    confirm_button = st.button(
-        "确认信息无误，提交",
-        #disabled=st.session_state.confirmed,  # 禁用已点击的按钮
-        key="unique_confirm_button"  # 固定唯一 key
-    )
-
-    if confirm_button: #and not st.session_state.confirmed:
-        #st.session_state.confirmed = True
-
-        #创建发送文本模版
-        #message_template = "我来自{province}，高考总分{score}，选考科目是{subjects}。我的全省排名是{rank}名。我对{favourite_subjects}感兴趣，对{unpleasant_subjects}不感兴趣。我的职业发展目标是：{future_goal}。我的偏好城市是：{city_preference}。"
-
-        #创建文本对象
-        # message_str=message_template.format(
-        #     province=st.session_state.student_info.at[0, "信息内容"],
-        #     score=st.session_state.student_info.at[1, "信息内容"],
-        #     subjects=st.session_state.student_info.at[2, "信息内容"],
-        #     rank=st.session_state.student_info.at[3, "信息内容"],
-        #     favourite_subjects=st.session_state.student_info.at[4, "信息内容"],
-        #     unpleasant_subjects=st.session_state.student_info.at[5, "信息内容"],
-        #     future_goal=st.session_state.student_info.at[6, "信息内容"],
-        #     city_preference=st.session_state.student_info.at[7, "信息内容"]
-        # )
-
-        live_city = st.session_state.student_info.at[0, "信息内容"]
-        score=st.session_state.student_info.at[1, "信息内容"]
-        subjects=st.session_state.student_info.at[2, "信息内容"]
-        rank=st.session_state.student_info.at[3, "信息内容"]
-        want_major=st.session_state.student_info.at[4, "信息内容"]
-        unwant_major=st.session_state.student_info.at[5, "信息内容"]
-        future_goal=st.session_state.student_info.at[6, "信息内容"]
-        strategy=st.session_state.student_info.at[7, "信息内容"]
-        hobby=st.session_state.student_info.at[8, "信息内容"]
-
-
-        backward= config['IP']['backward']
-        # fastapi服务地址
-        url = f"http://{backward}"
-        api_url = f"{url}/api/orange"
-
-        # 发送请求到FastAPI服务端
+        st.session_state.back = True
         try:
-            send={
+            live_city = st.session_state.student_info.at[0, "信息内容"]
+            score = st.session_state.student_info.at[1, "信息内容"]
+            subjects = st.session_state.student_info.at[2, "信息内容"]
+            rank = st.session_state.student_info.at[3, "信息内容"]
+            want_major = st.session_state.student_info.at[4, "信息内容"]
+            unwant_major = st.session_state.student_info.at[5, "信息内容"]
+            future_goal = st.session_state.student_info.at[6, "信息内容"]
+            strategy = st.session_state.student_info.at[7, "信息内容"]
+            hobby = st.session_state.student_info.at[8, "信息内容"]
+
+            backward = config['IP']['backward']
+            url = f"http://{backward}"
+            api_url = f"{url}/api/orange"
+            # 发送请求...
+            with st.spinner("正在提交信息，请不要点击其他页面..."):
+                send = {
                     "score": score,
                     "live_city": live_city,
                     "rank": rank,
                     "want_major": want_major,
                     "unwant_major": unwant_major,
-                    "hobby":hobby,
+                    "hobby": hobby,
                     "future_goal": future_goal,
                     "strategy": strategy,
                     "subjects": subjects,
-                      }
-            response=httpx.post(
-                f"{api_url}/student",
-                headers={"Content-Type": "application/json; charset=utf-8"},
-                json=send
-            )
-            response.raise_for_status()  # 检查请求是否成功
-            st.success("信息已提交！请稍等片刻，系统将为您推荐合适的专业。")
-            st.write("正在处理，请稍候")
-            #获取后端回复
-            r1 = httpx.post(
-                f"{api_url}/smart_recommend",
-                headers={"Content-Type": "application/json; charset=utf-8"},
-                json={},
-                timeout=3600
-            )
-            if r1.status_code == 200:  # 请求成功
-                try:
-                    response_data = r1.json()  # 尝试解析JSON响应
-                    if response_data:  # 如果响应数据不为空
-                        st.write("已获取到院校推荐结果，请点击“获取志愿结果”前往查看🍊")  # 输出yes
-                    else:
-                        st.warning("后端返回了空数据")
-                except ValueError:  # 如果响应不是有效的JSON
-                    st.error("响应不是有效的JSON格式")
+                }
+                response = httpx.post(
+                    f"{api_url}/student",
+                    headers={"Content-Type": "application/json; charset=utf-8"},
+                    json=send
+                )
+                response.raise_for_status()
+                st.success("信息已提交！请稍等片刻，系统将为您推荐合适的专业。")
 
+            # 获取后端回复
+            with st.spinner("正在获取推荐结果..."):
+                r1 = httpx.post(
+                    f"{api_url}/smart_recommend",
+                    headers={"Content-Type": "application/json; charset=utf-8"},
+                    json={},
+                    timeout=3600
+                )
+                if r1.status_code == 200:
+                    try:
+                        response_data = r1.json()
+                        if not response_data:
+                            st.warning("后端返回了空数据")
+                    except ValueError:
+                        st.error("响应不是有效的JSON格式")
+                #自动跳转
+                st.success("已获取到院校推荐结果，请点击“获取志愿结果”前往查看（2秒后自动跳转）🍊")
+                st.session_state.back=True
+                st.session_state.confirmed=False
+                time.sleep(2)
+                st.switch_page("result.py")
         except Exception as e:
             st.error(f"发送失败：{str(e)}")
+            # 出错时重置状态
+            st.session_state.confirmed = False
+            st.session_state.back = True
+
 
 #主程序
 if st.session_state.Current_page == 'page1':
